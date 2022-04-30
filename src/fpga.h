@@ -1,3 +1,4 @@
+
 /*
  * Space Cubics OBC TRCH Software
  *  Definitions for FPGA Control Utility
@@ -22,6 +23,8 @@ enum FpgaState{
 struct fpga_management_data {
         enum FpgaState state;
         unsigned config_ok: 1;
+        unsigned config_mem: 1;
+        unsigned boot_mode: 2;
         int count;
         int time;
 };
