@@ -165,7 +165,7 @@
         LOW(I2C_EXT_SCL_BIT) |                  \
         LOW(I2C_EXT_SDA_BIT) |                  \
         LOW(UIO3_00_BIT) |                      \
-        LOW(UIO3_01_BIT) |                      \
+        HIGH(UIO3_01_BIT) |                     \
         LOW(UIO3_02_BIT) |                      \
         LOW(FPGA_RESERVE_BIT))
 
@@ -181,7 +181,9 @@
 #define I2C_EXT_SDA        PORTDbits.RD3
 #define I2C_EXT_I2C_MASK   (0x0C)
 #define UIO3_00            PORTDbits.RD4
+#define T_UART_DE          PORTDbits.RD4
 #define UIO3_01            PORTDbits.RD5
+#define T_UART_RE_B        PORTDbits.RD5
 #define UIO3_02            PORTDbits.RD6
 
 /*

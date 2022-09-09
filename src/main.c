@@ -75,6 +75,9 @@ void main (void)
         /*
          * Space Cubics OBC TRCH-Firmware Main
          */
+        T_UART_DE = 1;
+        T_UART_RE_B = 0;
+        __delay_ms(1000);
         puts("SC OBC TRCH-FW " VERSION);
 
         while (1) {
