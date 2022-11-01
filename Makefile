@@ -26,9 +26,10 @@ SRCS := src/main.c src/fpga.c src/interrupt.c src/timer.c \
 	src/usart.c
 
 OBJS := $(SRCS:.c=.p1)
+ASMS := $(SRCS:.c=.s)
 
 # Clean File
-CF      = $(HEXDIR) src/*.p1 src/*.d MPLABXLog.* log.*
+CF      = $(HEXDIR) src/*.p1 src/*.d MPLABXLog.* log.* src/*.i src/*.sdb
 
 .PHONY: all
 all: build
@@ -36,14 +37,22 @@ all: build
 .PHONY: build
 build: $(PRGDAT).hex
 
+FORCE:
+src/version.h: FORCE
+	git describe --dirty | sed 's/release-\(.\+\)/#define VERSION "\1"/' > src/version.h
+
 $(PRGDAT).hex: $(OBJS)
 	mkdir -p $(HEXDIR)
 	echo '*' > $(HEXDIR)/.gitignore
-	$(CC) -o $(HEXDIR)/$(MODULE) $^
+	#$(CC) -S -o $(PRGDAT).s $^
+	$(CC) -o $@ $^
 
 include $(wildcard src/*.d)
 
 %.p1: %.c Makefile
+	$(CC) $(CONFIGS) -c -o $@ $<
+
+src/main.p1: src/main.c Makefile src/version.h
 	$(CC) $(CONFIGS) -c -o $@ $<
 
 flash: program
