@@ -41,6 +41,8 @@ $(PRGDAT).hex: $(OBJS)
 	echo '*' > $(HEXDIR)/.gitignore
 	$(CC) -o $(HEXDIR)/$(MODULE) $^
 
+include $(wildcard src/*.d)
+
 %.p1: %.c Makefile
 	$(CC) $(CONFIGS) -c -o $@ $<
 
