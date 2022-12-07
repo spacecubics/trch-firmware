@@ -28,6 +28,27 @@ uint32_t timer_get_ticks(void)
         return ret;
 }
 
+bool wait_for(uint16_t wait_ticks)
+{
+        static bool once = false;
+        static uint16_t start_tick;
+        uint16_t current_tick;
+
+        current_tick = (uint16_t)timer_get_ticks();
+
+        if (!once) {
+                once = true;
+                start_tick = current_tick;
+        }
+        else {
+                if ((current_tick - start_tick) >= wait_ticks) {
+                        once = false;
+                }
+        }
+
+        return !once;
+}
+
 /*
  * Initialize Timer 2
  *  Timer Interval 4 ms

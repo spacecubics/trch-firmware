@@ -10,6 +10,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define HZ (10)
 #define MSEC_PER_SEC (1000)
@@ -20,3 +21,4 @@ extern void timer2_ctrl (uint8_t control);
 extern void timer2_isr (void);
 
 extern uint32_t timer_get_ticks(void);
+extern bool wait_for(uint16_t);
