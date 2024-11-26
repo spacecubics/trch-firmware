@@ -70,6 +70,7 @@
 #define C1FIFOCONm_TFNRFNIE           BIT(0)
 
 /* CiFIFOCONm */
+#define C1FIFOCONm_FSIZE_32           0x1f
 #define C1FIFOCONm_TXREQ              BIT(1)
 #define C1FIFOCONm_UINC               BIT(0)
 
@@ -148,6 +149,7 @@ static void mpc2717fd_enable_rx_fifo(void)
         /* Have one and only one RX FIFO for now */
 
         /* Use FIFO 2 as Receiving FIFO and enable Receive FIFO Not Empty Interrupt */
+        spi_write8(C1FIFOCONm_FSIZE_32, C1FIFOCON2 + 3);
         spi_write8(C1FIFOCONm_TFNRFNIE, C1FIFOCON2);
 
         /* Enable Recive FIFO Interrupt */
