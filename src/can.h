@@ -18,6 +18,6 @@ typedef union canbuf {
 #define CAN_FLAGS_EID BIT(1)
 
 void can_init(void);
-void can_set_filter(uint8_t id, uint8_t mask);
+void can_set_filter(uint32_t id, uint32_t mask, uint32_t flags);
 void can_send(uint32_t id, canbuf_t *buf, uint8_t len, uint32_t flags);
 int can_recv(canbuf_t *buf);
