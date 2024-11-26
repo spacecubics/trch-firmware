@@ -88,9 +88,14 @@
 #define C1MASKm_MSID(x)               CAN_ID(x)
 
 #define CAN_STANDARD_11IBITS_ID_MASK  (0x7ff)
+#define CAN_EXTENDED_29IBITS_ID_MASK  (0x1FFF800)
 #define CAN_ID(x)                     ((x) & CAN_STANDARD_11IBITS_ID_MASK)
+#define CAN_ID_EXTENDED(x)            ((x) & CAN_EXTENDED_29IBITS_ID_MASK)
 #define CAN_DLC_MASK                  (0xf)
 #define CAN_DLC(x)                    ((x) & CAN_DLC_MASK)
+
+/* Message Object */
+#define MSGOBJ_EID                    BIT(4)
 
 
 static void mpc2717fd_reset(void)
@@ -280,14 +285,25 @@ static void mpc2717fd_spi_write(canbuf_t *buf, uint8_t len, uint16_t addr)
         return;
 }
 
-static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len)
+static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len, uint32_t flags)
 {
         uint16_t addr;
+        uint32_t te0;
+        uint32_t te1;
 
         addr = spi_read16(C1FIFOUA1);
 
-        spi_write32(CAN_ID(sid), (uint16_t)C1RAM + addr);
-        spi_write32(CAN_DLC(len), (uint16_t)C1RAM + 4 + addr);
+        if ((flags & CAN_FLAGS_EID) != 0) {
+                te0 = CAN_ID(sid >> 18);
+                te0 |= CAN_ID_EXTENDED(sid << 11);
+                te1 = CAN_DLC(len) | MSGOBJ_EID;
+        } else {
+                te0 = CAN_ID(sid);
+                te1 = CAN_DLC(len);
+        }
+
+        spi_write32(te0, (uint16_t)C1RAM + addr);
+        spi_write32(te1, (uint16_t)C1RAM + 4 + addr);
         mpc2717fd_spi_write(buf, len, (uint16_t)C1RAM + 8 + addr);
 
         /* send it */
@@ -301,9 +317,9 @@ void can_set_filter(uint8_t id, uint8_t mask)
         mpc2717fd_setup_filter0(id, mask);
 }
 
-void can_send(uint32_t id, canbuf_t *buf, uint8_t len)
+void can_send(uint32_t id, canbuf_t *buf, uint8_t len, uint32_t flags)
 {
-        mpc2717fd_send(id, buf, len);
+        mpc2717fd_send(id, buf, len, flags);
 }
 
 void can_init(void)
