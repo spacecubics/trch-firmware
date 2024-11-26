@@ -229,7 +229,7 @@ static uint8_t mpc2717fd_recv_fifo_copy_to_buffer(canbuf_t *buf)
         dlc = mpc2717fd_recv_fifo_get_dlc(addr);
         dlc = MIN(dlc, sizeof(canbuf_t));
 
-        mpc2717fd_spi_read32(buf, dlc, addr);
+        mpc2717fd_spi_read32(buf, dlc, (C1RAM + addr + 8));
 
         return dlc;
 }
