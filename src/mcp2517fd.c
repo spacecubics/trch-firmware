@@ -82,10 +82,12 @@
 
 /* CiFLTOBJm */
 #define C1FLTOBJm_SID(x)              CAN_ID(x)
+#define C1FLTOBJm_EID(x)              (CAN_ID(x >> 18) | CAN_ID_EXTENDED((x) << 11))
 
 /* CiMASKm */
 #define C1MASKm_MIDE                  BIT(30)
 #define C1MASKm_MSID(x)               CAN_ID(x)
+#define C1MASKm_MEID(x)               (CAN_ID(x >> 18) | CAN_ID_EXTENDED((x) << 11))
 
 #define CAN_STANDARD_11IBITS_ID_MASK  (0x7ff)
 #define CAN_EXTENDED_29IBITS_ID_MASK  (0x1FFF800)
@@ -152,15 +154,19 @@ static void mpc2717fd_enable_rx_fifo(void)
         spi_write32(C1INT_RXIE, C1INT);
 }
 
-static void mpc2717fd_setup_filter0(uint16_t sid, uint16_t sid_mask)
+static void mpc2717fd_setup_filter0(uint32_t sid, uint32_t sid_mask, uint32_t flags)
 {
         /* Disable the filter */
         spi_write8(0, C1FLTCON0);
 
         /* Setup filter object and mask */
-        /* only for standard 11 bits ID for now */
-        spi_write32(C1FLTOBJm_SID(sid), C1FLTOBJ0);
-        spi_write32(C1MASKm_MIDE | C1MASKm_MSID(sid_mask), C1MASK0);
+        if ((flags & CAN_FLAGS_EID) != 0) {
+                spi_write32(C1FLTOBJm_EID(sid), C1FLTOBJ0);
+                spi_write32(C1MASKm_MIDE | C1MASKm_MEID(sid_mask), C1MASK0);
+        } else {
+                spi_write32(C1FLTOBJm_SID(sid), C1FLTOBJ0);
+                spi_write32(C1MASKm_MIDE | C1MASKm_MSID(sid_mask), C1MASK0);
+        }
 
         /* Enable the filter on FIFO 2 */
         spi_write8(C1FLTCONm_F0BP(2) | C1FLTCONm_FLTEN0, C1FLTCON0);
@@ -312,9 +318,9 @@ static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len, uint32_t fl
         spi_write8(C1FIFOCONm_TXREQ | C1FIFOCONm_UINC, C1FIFOCON1 + 1);
 }
 
-void can_set_filter(uint8_t id, uint8_t mask)
+void can_set_filter(uint32_t id, uint32_t mask, uint32_t flags)
 {
-        mpc2717fd_setup_filter0(id, mask);
+        mpc2717fd_setup_filter0(id, mask, flags);
 }
 
 void can_send(uint32_t id, canbuf_t *buf, uint8_t len, uint32_t flags)
