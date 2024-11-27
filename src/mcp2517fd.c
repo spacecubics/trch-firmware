@@ -70,6 +70,7 @@
 #define C1FIFOCONm_TFNRFNIE           BIT(0)
 
 /* CiFIFOCONm */
+#define C1FIFOCONm_FSIZE_32           0x1f
 #define C1FIFOCONm_TXREQ              BIT(1)
 #define C1FIFOCONm_UINC               BIT(0)
 
@@ -82,15 +83,22 @@
 
 /* CiFLTOBJm */
 #define C1FLTOBJm_SID(x)              CAN_ID(x)
+#define C1FLTOBJm_EID(x)              (CAN_ID(x >> 18) | CAN_ID_EXTENDED((x) << 11))
 
 /* CiMASKm */
 #define C1MASKm_MIDE                  BIT(30)
 #define C1MASKm_MSID(x)               CAN_ID(x)
+#define C1MASKm_MEID(x)               (CAN_ID(x >> 18) | CAN_ID_EXTENDED((x) << 11))
 
 #define CAN_STANDARD_11IBITS_ID_MASK  (0x7ff)
+#define CAN_EXTENDED_29IBITS_ID_MASK  (0x1FFF800)
 #define CAN_ID(x)                     ((x) & CAN_STANDARD_11IBITS_ID_MASK)
+#define CAN_ID_EXTENDED(x)            ((x) & CAN_EXTENDED_29IBITS_ID_MASK)
 #define CAN_DLC_MASK                  (0xf)
 #define CAN_DLC(x)                    ((x) & CAN_DLC_MASK)
+
+/* Message Object */
+#define MSGOBJ_EID                    BIT(4)
 
 
 static void mpc2717fd_reset(void)
@@ -141,21 +149,26 @@ static void mpc2717fd_enable_rx_fifo(void)
         /* Have one and only one RX FIFO for now */
 
         /* Use FIFO 2 as Receiving FIFO and enable Receive FIFO Not Empty Interrupt */
+        spi_write8(C1FIFOCONm_FSIZE_32, C1FIFOCON2 + 3);
         spi_write8(C1FIFOCONm_TFNRFNIE, C1FIFOCON2);
 
         /* Enable Recive FIFO Interrupt */
         spi_write32(C1INT_RXIE, C1INT);
 }
 
-static void mpc2717fd_setup_filter0(uint16_t sid, uint16_t sid_mask)
+static void mpc2717fd_setup_filter0(uint32_t sid, uint32_t sid_mask, uint32_t flags)
 {
         /* Disable the filter */
         spi_write8(0, C1FLTCON0);
 
         /* Setup filter object and mask */
-        /* only for standard 11 bits ID for now */
-        spi_write32(C1FLTOBJm_SID(sid), C1FLTOBJ0);
-        spi_write32(C1MASKm_MIDE | C1MASKm_MSID(sid_mask), C1MASK0);
+        if ((flags & CAN_FLAGS_EID) != 0) {
+                spi_write32(C1FLTOBJm_EID(sid), C1FLTOBJ0);
+                spi_write32(C1MASKm_MIDE | C1MASKm_MEID(sid_mask), C1MASK0);
+        } else {
+                spi_write32(C1FLTOBJm_SID(sid), C1FLTOBJ0);
+                spi_write32(C1MASKm_MIDE | C1MASKm_MSID(sid_mask), C1MASK0);
+        }
 
         /* Enable the filter on FIFO 2 */
         spi_write8(C1FLTCONm_F0BP(2) | C1FLTCONm_FLTEN0, C1FLTCON0);
@@ -224,7 +237,7 @@ static uint8_t mpc2717fd_recv_fifo_copy_to_buffer(canbuf_t *buf)
         dlc = mpc2717fd_recv_fifo_get_dlc(addr);
         dlc = MIN(dlc, sizeof(canbuf_t));
 
-        mpc2717fd_spi_read32(buf, dlc, addr);
+        mpc2717fd_spi_read32(buf, dlc, (C1RAM + addr + 8));
 
         return dlc;
 }
@@ -280,14 +293,25 @@ static void mpc2717fd_spi_write(canbuf_t *buf, uint8_t len, uint16_t addr)
         return;
 }
 
-static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len)
+static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len, uint32_t flags)
 {
         uint16_t addr;
+        uint32_t te0;
+        uint32_t te1;
 
         addr = spi_read16(C1FIFOUA1);
 
-        spi_write32(CAN_ID(sid), (uint16_t)C1RAM + addr);
-        spi_write32(CAN_DLC(len), (uint16_t)C1RAM + 4 + addr);
+        if ((flags & CAN_FLAGS_EID) != 0) {
+                te0 = CAN_ID(sid >> 18);
+                te0 |= CAN_ID_EXTENDED(sid << 11);
+                te1 = CAN_DLC(len) | MSGOBJ_EID;
+        } else {
+                te0 = CAN_ID(sid);
+                te1 = CAN_DLC(len);
+        }
+
+        spi_write32(te0, (uint16_t)C1RAM + addr);
+        spi_write32(te1, (uint16_t)C1RAM + 4 + addr);
         mpc2717fd_spi_write(buf, len, (uint16_t)C1RAM + 8 + addr);
 
         /* send it */
@@ -296,14 +320,14 @@ static void mpc2717fd_send(uint32_t sid, canbuf_t *buf, uint8_t len)
         spi_write8(C1FIFOCONm_TXREQ | C1FIFOCONm_UINC, C1FIFOCON1 + 1);
 }
 
-void can_set_filter(uint8_t id, uint8_t mask)
+void can_set_filter(uint32_t id, uint32_t mask, uint32_t flags)
 {
-        mpc2717fd_setup_filter0(id, mask);
+        mpc2717fd_setup_filter0(id, mask, flags);
 }
 
-void can_send(uint32_t id, canbuf_t *buf, uint8_t len)
+void can_send(uint32_t id, canbuf_t *buf, uint8_t len, uint32_t flags)
 {
-        mpc2717fd_send(id, buf, len);
+        mpc2717fd_send(id, buf, len, flags);
 }
 
 void can_init(void)
