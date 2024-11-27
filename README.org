@@ -47,10 +47,24 @@
   #+end_example
 
 ** Program
-   You need a Microchip MPLAB IPE and MPLAB PICkit4.  Make sure it
-   works on your system and do the following.
+   You need a Microchip MPLAB IPE and MPLAB PICkit4 or PICkit5.
+   The default is to use PICkit4.
+   Make sure it works on your system and do the following.
 
    #+begin_example
+     $ make program
+   #+end_example
+
+   If you have a PICkit5, you can either do
+
+   #+begin_example
+     $ make program TRCH_PICKIT=PPK5
+   #+end_example
+
+   or
+
+   #+begin_example
+     $ export TRCH_PICKIT=PPK5
      $ make program
    #+end_example
 

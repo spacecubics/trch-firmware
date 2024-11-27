@@ -6,7 +6,7 @@ CONFIGS += -DCONFIG_FPGA_WATCHDOG_TIMEOUT=30
 # Design Parameter
 MODULE := trch-firmware
 DEVICE := 16LF877
-TARGET := PPK4
+TRCH_PICKIT ?= PPK4
 
 # Command variables
 CC     := xc8-cc -mcpu=$(DEVICE)
@@ -73,19 +73,19 @@ $(LIBDEVICE): $(LIB_OBJS)
 flash: program
 .PHONY: program
 program: $(PRGDAT).hex
-	$(IPECMD) -P$(DEVICE) -T$(TARGET) -F$< -M -OL
+	$(IPECMD) -P$(DEVICE) -T$(TRCH_PICKIT) -F$< -M -OL
 
 .PHONY: erase
 erase:
-	$(IPECMD) -P$(DEVICE) -T$(TARGET) -E
+	$(IPECMD) -P$(DEVICE) -T$(TRCH_PICKIT) -E
 
 .PHONY: reset
 reset:
-	$(IPECMD) -P$(DEVICE) -T$(TARGET) -OK -OL
+	$(IPECMD) -P$(DEVICE) -T$(TRCH_PICKIT) -OK -OL
 
 .PHONY: halt
 halt:
-	$(IPECMD) -P$(DEVICE) -T$(TARGET) -OK
+	$(IPECMD) -P$(DEVICE) -T$(TRCH_PICKIT) -OK
 
 .PHONY: clean
 clean:
