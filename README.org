@@ -4,6 +4,13 @@
 
 * How to build and program
 ** Prerequisite
+
+   Since XC8 v3.10, you need to have a Device Family Pack for
+   PIC16LF877. Go to [[https://packs.download.microchip.com/][Microchip Packs Repository]], download, and install
+   it.  If you have X IDE installed, you might already have it.
+
+   Please read MPLAB XC8 C Compiler User's Guide for more details.
+
    #+begin_example
      $ xc8-cc --version
      Microchip MPLAB XC8 C Compiler V2.46

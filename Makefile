@@ -7,9 +7,10 @@ CONFIGS += -DCONFIG_FPGA_WATCHDOG_TIMEOUT=30
 MODULE := trch-firmware
 DEVICE := 16LF877
 TRCH_PICKIT ?= PPK4
+TRCH_DFP ?= $(HOME)/.mchp_packs/Microchip/PIC16Fxxx_DFP/1.7.162/xc8
 
 # Command variables
-CC     := xc8-cc -mcpu=$(DEVICE)
+CC     := xc8-cc -mcpu=$(DEVICE) -mdfp=$(TRCH_DFP)
 AR     := xc8-ar r
 IPECMD := ipecmd.sh
 RM     := rm -rf
