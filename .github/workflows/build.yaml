@@ -3,6 +3,7 @@ on: [push, pull_request]
 env:
   XC8_URL: https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools
   XC8_INSTALL_DIR: microchip/xc8
+  DFP_INSTALL_DIR: mchp_packs/Microchip/PIC16Fxxx_DFP
 
 jobs:
   build:
@@ -12,6 +13,8 @@ jobs:
       matrix:
         xc8-version:
           - 'v2.46'
+        dfp-version:
+          - '1.7.162'
 
     steps:
       - name: Checkout
@@ -35,7 +38,13 @@ jobs:
         run: |
           fakeroot ./*.run --mode unattended --netservername localhost --LicenseType FreeMode --prefix $GITHUB_WORKSPACE/$XC8_INSTALL_DIR
 
+      - name: Download & Install Device Family Packs
+        run: |
+          wget https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.${{ matrix.dfp-version }}.atpack
+          mkdir -p $DFP_INSTALL_DIR/${{ matrix.dfp-version }}
+          unzip Microchip.PIC16Fxxx_DFP.${{ matrix.dfp-version }}.atpack -d $DFP_INSTALL_DIR/${{ matrix.dfp-version }}
+
       - name: Build
         run: |
           export PATH=$GITHUB_WORKSPACE/$XC8_INSTALL_DIR/bin:$PATH
-          make
+          make TRCH_DFP=$DFP_INSTALL_DIR/${{ matrix.dfp-version }}/xc8
