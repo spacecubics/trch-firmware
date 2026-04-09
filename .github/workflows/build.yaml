@@ -13,6 +13,9 @@ jobs:
       matrix:
         xc8-version:
           - 'v2.46'
+          - 'v2.50'
+          - 'v3.00'
+          - 'v3.10'
         dfp-version:
           - '1.7.162'
 
