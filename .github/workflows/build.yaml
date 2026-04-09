@@ -30,6 +30,13 @@ jobs:
           path: ${{ env.XC8_INSTALL_DIR }}
           key: xc8-${{ matrix.xc8-version }}-full-install-linux-x64-installer.run
 
+      - name: Cache DFP
+        uses: actions/cache@v5
+        id: cache-dfp
+        with:
+          path: ${{ env.DFP_INSTALL_DIR }}
+          key: dfp-${{ matrix.dfp-version }}
+
       - name: Download XC8
         if: steps.cache-xc8.outputs.cache-hit != 'true'
         run: |
@@ -42,6 +49,7 @@ jobs:
           fakeroot ./*.run --mode unattended --netservername localhost --LicenseType FreeMode --prefix $GITHUB_WORKSPACE/$XC8_INSTALL_DIR
 
       - name: Download & Install Device Family Packs
+        if: steps.cache-dfp.outputs.cache-hit != 'true'
         run: |
           wget https://packs.download.microchip.com/Microchip.PIC16Fxxx_DFP.${{ matrix.dfp-version }}.atpack
           mkdir -p $DFP_INSTALL_DIR/${{ matrix.dfp-version }}
