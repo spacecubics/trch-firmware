@@ -28,7 +28,7 @@ static uint8_t to_reg (uint8_t channel, enum Ina3221VoltageType type) {
          * reg 5: channel 3 shunt
          * reg 6: channel 3 bus
          */
-        return ((channel - 1) * 2) + REG_VOLTAGE_BASE + type;
+        return ((channel - 1) * 2) + REG_VOLTAGE_BASE + (uint8_t)type;
 }
 
 int8_t ina3221_data_read (struct ina3221_data *id, enum FpgaState fpga_state, enum Ina3221VoltageType type) {
