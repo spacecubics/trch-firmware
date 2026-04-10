@@ -54,11 +54,13 @@ void putch(char ch)
         TXREG = ch;
 }
 
-void usart_start_receive (void) {
-        char buf;
+void usart_start_receive (void)
+{
         RCSTAbits.CREN = 1;
-        if (RCSTAbits.FERR || PIR1bits.RCIF)
-                buf = RCREG;
+        if (RCSTAbits.FERR || PIR1bits.RCIF) {
+                /* Read RCREG to clear the status */
+                (void)RCREG;
+        }
         rx_msg.active = 0;
         rx_msg.addr = 0;
         rx_msg.err = 0;
