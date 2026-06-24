@@ -24,14 +24,14 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Cache XC8
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-xc8
         with:
           path: ${{ env.XC8_INSTALL_DIR }}
           key: xc8-${{ matrix.xc8-version }}-full-install-linux-x64-installer.run
 
       - name: Cache DFP
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-dfp
         with:
           path: ${{ env.DFP_INSTALL_DIR }}
